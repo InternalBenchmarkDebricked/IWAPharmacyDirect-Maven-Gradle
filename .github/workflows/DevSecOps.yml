@@ -27,10 +27,6 @@ on:
         description: 'Carry out SAST scan using Fortify on Demand'
         required: false
         default: 'true'
-      runDebrickedScan:
-        description: 'Carry out SCA scan using Debricked'
-        required: false
-        default: 'true'
       runFoDDASTScan:
         description: 'Carry out DAST scan using Fortify on Demand'
         required: false
@@ -76,26 +72,6 @@ jobs:
     # Build / Test with Maven
     - name: Build with Maven
       run:  mvn -Dmaven.compiler.debuglevel=lines,vars,source -Dskip.unit.tests=false -DfailIfNoTests=false -Dtest="*,!PasswordConstraintValidatorTest,!UserServiceTest,!DefaultControllerTest" -P jar -B clean verify package --file pom.xml
-
-  Debricked-SCA:
-    runs-on: ubuntu-latest
-    if: ${{ (github.event_name == 'push') || (github.event_name == 'pull_request') || (github.event.inputs.runDebrickedScan == 'true') }}
-
-    steps:
-      - uses: actions/checkout@v3.3.0
-      - uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '11'
-          cache: 'maven'
-      - run: |
-          mvn dependency:tree \
-          -DoutputFile=.debricked-maven-dependencies.tgf \
-          -DoutputType=tgf
-      - uses: debricked/vulnerable-functionality/java/maven@v0
-      - uses: debricked/actions/scan@v1
-        env:
-          DEBRICKED_TOKEN: ${{ secrets.DEBRICKED_TOKEN }}
 
   Quality-Gate:
     runs-on: ubuntu-latest
@@ -178,12 +154,6 @@ jobs:
         env:
           FOD_RELEASE_NAME: ${{ steps.extract_branch.outputs.branch }}
           FOD_PARENT_RELEASE_NAME: "main"
-
-      # For Debricked OSS scanning with FoD we need a dependencies file.
-      # For instructions on generating the resolved dependency tree file, see https://debricked.com/docs/language-support/java-kotlin.html#gradle.*
-      - name: Generate Maven dependencies file
-        shell: bash
-        run: mvn dependency:tree -DoutputFile=.debricked-maven-dependencies.tgf -DoutputType=tgf
 
       # Prepare source+dependencies for upload. The default example is for a Maven project that uses pom.xml.
       # Update PACKAGE_OPTS based on the ScanCentral Client documentation for your project's included tech stack(s). Helpful hints:
@@ -319,7 +289,7 @@ jobs:
   Security-Gate:
     runs-on: ubuntu-latest
     if: ${{ always() }}
-    needs: [ Debricked-SCA,FoD-SAST-Scan,FoD-DAST-Scan ]
+    needs: [ FoD-SAST-Scan,FoD-DAST-Scan ]
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
