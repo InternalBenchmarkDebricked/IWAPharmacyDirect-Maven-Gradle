@@ -1,6 +1,6 @@
 ![Continuous Inspection](https://github.com/fortify-presales/IWAPharmacyDirect/workflows/Continuous%20Inspection/badge.svg)
 
-# IWA (Insecure Web App) Pharmacy Direct
+# IWA (Insecure Web App) Pharmacy Directds
 
 #### Table of Contents
 
